@@ -11,6 +11,7 @@ import (
 
 	"github.com/dhitalkamal/mdo/internal/blocks"
 	"github.com/dhitalkamal/mdo/internal/clip"
+	"github.com/dhitalkamal/mdo/internal/mcp"
 	"github.com/dhitalkamal/mdo/internal/render"
 	"github.com/dhitalkamal/mdo/internal/runner"
 	"github.com/dhitalkamal/mdo/internal/term"
@@ -27,6 +28,11 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	// `mdo mcp` starts the Model Context Protocol server on stdio for AI agents.
+	if len(args) > 0 && args[0] == "mcp" {
+		return mcp.Serve(stdin, stdout, version)
+	}
+
 	fs := flag.NewFlagSet("mdo", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	copyN := fs.Int("copy", 0, "copy the Nth fenced code block to the clipboard (OSC 52) and exit")

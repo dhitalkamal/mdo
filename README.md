@@ -64,6 +64,25 @@ mdo --run README.md      # step through shell blocks, confirming each before it 
 With `--run`, mdo shows each shell block and asks `[y]es / [c]opy / [s]kip / [q]uit`
 before it runs - so an AI agent can propose a runbook and you vet every step.
 
+## Use as an MCP server (AI agents)
+
+mdo speaks the Model Context Protocol over stdio, so AI agents can render markdown
+and inspect a document's code blocks natively:
+
+```sh
+mdo mcp
+```
+
+Register it with an MCP client, e.g. Claude Code:
+
+```sh
+claude mcp add mdo -- mdo mcp
+```
+
+Tools exposed: `render_markdown`, `list_code_blocks`, `get_code_block` (each takes
+`path` or inline `content`). This is the point of mdo: an agent proposes, and the
+tool + human vet and run.
+
 ## Status
 
-Early development. Not yet released.
+Early development.
