@@ -7,7 +7,8 @@ blocks. Built for people who live in the terminal on any device (SSH, Termux, a
 bare TTY), and designed so AI agents can drive it too: an agent proposes a
 runbook, you vet and run each step.
 
-Status: work in progress. v1 scope is render + OSC 52 clipboard copy.
+Status: work in progress. v1: render, OSC 52 clipboard copy, and an interactive
+step-through runner that vets each shell block before running it.
 
 ## Why
 
@@ -31,7 +32,11 @@ make build
 mdo README.md            # render a markdown file
 mdo --list README.md     # list the fenced code blocks
 mdo --copy 1 README.md   # copy the first code block to the clipboard (OSC 52)
+mdo --run README.md      # step through shell blocks, confirming each before it runs
 ```
+
+With `--run`, mdo shows each shell block and asks `[y]es / [c]opy / [s]kip / [q]uit`
+before it runs - so an AI agent can propose a runbook and you vet every step.
 
 ## Status
 

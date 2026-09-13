@@ -12,6 +12,7 @@ import (
 	"github.com/dhitalkamal/mdo/internal/blocks"
 	"github.com/dhitalkamal/mdo/internal/clip"
 	"github.com/dhitalkamal/mdo/internal/render"
+	"github.com/dhitalkamal/mdo/internal/runner"
 	"github.com/dhitalkamal/mdo/internal/term"
 )
 
@@ -27,10 +28,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	fs.SetOutput(stderr)
 	copyN := fs.Int("copy", 0, "copy the Nth fenced code block to the clipboard (OSC 52) and exit")
 	list := fs.Bool("list", false, "list fenced code blocks and exit")
+	runIt := fs.Bool("run", false, "step through fenced shell blocks, confirming each before it runs")
 	noColor := fs.Bool("no-color", false, "disable color output")
 	width := fs.Int("width", 0, "wrap width in columns (0 = auto-detect)")
 	fs.IntVar(copyN, "c", 0, "shorthand for --copy")
 	fs.BoolVar(list, "l", false, "shorthand for --list")
+	fs.BoolVar(runIt, "r", false, "shorthand for --run")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, "usage: mdo [flags] [file]\n\n"+
 			"render a markdown file (or stdin) in the terminal.\n\nflags:\n")
@@ -38,6 +41,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	}
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+
+	if *runIt && (fs.Arg(0) == "" || fs.Arg(0) == "-") {
+		return fmt.Errorf("--run needs a file argument (stdin is used for your y/n answers)")
 	}
 
 	src, err := readInput(fs.Arg(0), stdin)
@@ -50,6 +57,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return listBlocks(stdout, src)
 	case *copyN > 0:
 		return copyBlock(stdout, stderr, src, *copyN)
+	case *runIt:
+		return runBlocks(stdin, stdout, src)
 	default:
 		level := colorLevel(*noColor, stdout)
 		w := *width
@@ -94,6 +103,21 @@ func copyBlock(stdout, stderr io.Writer, src []byte, n int) error {
 	}
 	fmt.Fprintf(stderr, "copied code block %d to clipboard\n", n)
 	return nil
+}
+
+// runBlocks steps through the shell code blocks, confirming each before it runs.
+func runBlocks(stdin io.Reader, stdout io.Writer, src []byte) error {
+	var shell []blocks.Block
+	for _, b := range blocks.Extract(src) {
+		if runner.IsShell(b.Lang) {
+			shell = append(shell, b)
+		}
+	}
+	if len(shell) == 0 {
+		_, err := fmt.Fprintln(stdout, "no runnable shell code blocks found")
+		return err
+	}
+	return runner.Run(shell, stdin, stdout, runner.ShellExecutor)
 }
 
 // colorLevel decides color, disabling it when output is piped or NO_COLOR is set.
