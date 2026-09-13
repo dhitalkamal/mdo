@@ -41,6 +41,23 @@ func TestRunCopiesBlockAsOSC52(t *testing.T) {
 	}
 }
 
+func TestRunHelpExitsClean(t *testing.T) {
+	var out, errb bytes.Buffer
+	if err := run([]string{"--help"}, strings.NewReader(""), &out, &errb); err != nil {
+		t.Fatalf("--help should return nil (clean exit), got %v", err)
+	}
+	help := errb.String()
+	if !strings.Contains(help, "usage: mdo") {
+		t.Errorf("help missing usage line: %q", help)
+	}
+	if !strings.Contains(help, "mcp") {
+		t.Errorf("help should mention the mcp subcommand: %q", help)
+	}
+	if !strings.Contains(help, "example") {
+		t.Errorf("help should include examples: %q", help)
+	}
+}
+
 func TestRunVersion(t *testing.T) {
 	var out, errb bytes.Buffer
 	if err := run([]string{"--version"}, strings.NewReader(""), &out, &errb); err != nil {

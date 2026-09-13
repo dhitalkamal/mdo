@@ -50,11 +50,27 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	fs.BoolVar(runIt, "r", false, "shorthand for --run")
 	fs.BoolVar(tuiMode, "t", false, "shorthand for --tui")
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "usage: mdo [flags] [file]\n\n"+
-			"render a markdown file (or stdin) in the terminal.\n\nflags:\n")
+		fmt.Fprint(stderr, `usage: mdo [flags] [file]
+       mdo mcp
+
+Render a markdown file (or stdin) in the terminal.
+
+examples:
+  mdo README.md            render a file
+  mdo --tui README.md      interactive pager (scroll, / search, t contents)
+  mdo --list README.md     list fenced code blocks
+  mdo --copy 1 README.md   copy a code block to the clipboard (OSC 52)
+  mdo --run script.md      step through shell blocks, confirming each
+  mdo mcp                  run the MCP server on stdio (for AI agents)
+
+flags:
+`)
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return nil // usage already printed; help is a clean exit
+		}
 		return err
 	}
 
