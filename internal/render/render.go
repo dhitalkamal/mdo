@@ -6,6 +6,7 @@ package render
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/alecthomas/chroma/v2/quick"
@@ -15,14 +16,17 @@ import (
 	extast "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 
+	"github.com/dhitalkamal/mdo/internal/img"
 	"github.com/dhitalkamal/mdo/internal/term"
 	"github.com/dhitalkamal/mdo/internal/theme"
 )
 
 // Options controls a render.
 type Options struct {
-	Level term.Level // color capability
-	Width int        // wrap width in columns (<= 0 disables wrapping)
+	Level   term.Level // color capability
+	Width   int        // wrap width in columns (<= 0 disables wrapping)
+	Images  img.Kind   // terminal image capability (KindNone leaves text placeholders)
+	BaseDir string     // directory for resolving relative image paths
 }
 
 // Render returns src rendered as ANSI text.
@@ -74,8 +78,12 @@ func (r *renderer) block(n ast.Node, indent string) {
 		r.writeLine(indent + r.headingStyle(t.Level).Apply(r.inline(n)))
 		r.blank()
 	case *ast.Paragraph:
-		r.paragraph(n, indent)
-		r.blank()
+		if im := loneImage(n); im != nil && r.opts.Images != img.KindNone && r.renderImage(im, indent) {
+			r.blank()
+		} else {
+			r.paragraph(n, indent)
+			r.blank()
+		}
 	case *ast.TextBlock: // tight list item content: no trailing blank
 		r.paragraph(n, indent)
 	case *ast.FencedCodeBlock:
@@ -211,6 +219,43 @@ func (r *renderer) codeBlock(lang, code, indent string) {
 		return
 	}
 	emit(buf.String())
+}
+
+// loneImage returns the image if n's only inline child is an image (a block
+// image like `![alt](src)` on its own line), else nil.
+func loneImage(n ast.Node) *ast.Image {
+	c := n.FirstChild()
+	if c != nil && c == n.LastChild() {
+		if im, ok := c.(*ast.Image); ok {
+			return im
+		}
+	}
+	return nil
+}
+
+// renderImage loads and draws an image; returns false (to fall back to a text
+// placeholder) if the source cannot be loaded or rendered.
+func (r *renderer) renderImage(im *ast.Image, indent string) bool {
+	src := string(im.Destination)
+	if src == "" {
+		return false
+	}
+	if r.opts.BaseDir != "" && !strings.HasPrefix(src, "http://") &&
+		!strings.HasPrefix(src, "https://") && !filepath.IsAbs(src) {
+		src = filepath.Join(r.opts.BaseDir, src)
+	}
+	data, err := img.Load(src)
+	if err != nil {
+		return false
+	}
+	out, err := img.Render(data, r.opts.Images, r.opts.Width-visibleLen(indent))
+	if err != nil {
+		return false
+	}
+	for _, ln := range strings.Split(out, "\n") {
+		r.writeLine(indent + ln)
+	}
+	return true
 }
 
 // inline renders a node's inline children to a styled string.

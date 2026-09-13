@@ -17,6 +17,7 @@ for the terminal-everywhere, human-vets-the-agent workflow:
 
 - copies code blocks to your real clipboard even over SSH / Termux (OSC 52)
 - works anywhere a terminal runs, single static binary, no runtime deps
+- renders inline images (kitty graphics protocol, or unicode half-blocks on any truecolor terminal)
 - plain-text and git-native: your docs stay yours, no lock-in
 
 ## Install

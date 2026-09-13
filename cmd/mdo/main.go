@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dhitalkamal/mdo/internal/blocks"
 	"github.com/dhitalkamal/mdo/internal/clip"
+	"github.com/dhitalkamal/mdo/internal/img"
 	"github.com/dhitalkamal/mdo/internal/mcp"
 	"github.com/dhitalkamal/mdo/internal/render"
 	"github.com/dhitalkamal/mdo/internal/runner"
@@ -80,7 +82,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		if w == 0 {
 			w = term.Width(fdOf(stdout), 80)
 		}
-		_, err := io.WriteString(stdout, render.Render(src, render.Options{Level: level, Width: w}))
+		base := "."
+		if f := fs.Arg(0); f != "" && f != "-" {
+			base = filepath.Dir(f)
+		}
+		opts := render.Options{Level: level, Width: w, Images: imgKind(level, stdout), BaseDir: base}
+		_, err := io.WriteString(stdout, render.Render(src, opts))
 		return err
 	}
 }
@@ -145,6 +152,18 @@ func colorLevel(noColor bool, out io.Writer) term.Level {
 		return term.LevelNone
 	}
 	return term.ColorLevel(os.Getenv)
+}
+
+// imgKind reports the terminal's image capability, off when piped or NO_COLOR.
+func imgKind(level term.Level, out io.Writer) img.Kind {
+	if level == term.LevelNone {
+		return img.KindNone
+	}
+	f, ok := out.(*os.File)
+	if !ok || !term.IsTerminal(int(f.Fd())) {
+		return img.KindNone
+	}
+	return img.Capable(os.Getenv, level == term.LevelTrueColor)
 }
 
 func fdOf(out io.Writer) int {
