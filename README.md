@@ -19,10 +19,36 @@ for the terminal-everywhere, human-vets-the-agent workflow:
 - works anywhere a terminal runs, single static binary, no runtime deps
 - plain-text and git-native: your docs stay yours, no lock-in
 
-## Build
+## Install
+
+One-line install (downloads the right binary to `~/.local/bin`):
 
 ```sh
-make build
+curl -fsSL https://raw.githubusercontent.com/dhitalkamal/mdo/main/install.sh | sh
+```
+
+With Go:
+
+```sh
+go install github.com/dhitalkamal/mdo/cmd/mdo@latest
+```
+
+Homebrew (macOS / Linux):
+
+```sh
+brew install dhitalkamal/tap/mdo
+```
+
+Arch Linux: `mdo-bin` on the AUR. Termux (Android), Raspberry Pi, and servers:
+use the one-line installer, or grab the linux arm64 binary from the
+[releases page](https://github.com/dhitalkamal/mdo/releases). Prebuilt binaries
+cover linux amd64/arm64 and macOS amd64/arm64.
+
+## Build from source
+
+```sh
+git clone https://github.com/dhitalkamal/mdo
+cd mdo && make build
 ./mdo README.md
 ```
 

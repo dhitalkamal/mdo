@@ -1,0 +1,18 @@
+# Maintainer: Kamal Dhital <dhitalkamal@users.noreply.github.com>
+pkgname=mdo-bin
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Render markdown and vet/run its code blocks in the terminal (OSC 52 clipboard, works over SSH/Termux)'
+arch=('x86_64' 'aarch64')
+url='https://github.com/dhitalkamal/mdo'
+license=('MIT')
+provides=('mdo')
+conflicts=('mdo')
+source_x86_64=("mdo-${pkgver}-x86_64.tar.gz::https://github.com/dhitalkamal/mdo/releases/download/v${pkgver}/mdo_v${pkgver}_linux_amd64.tar.gz")
+source_aarch64=("mdo-${pkgver}-aarch64.tar.gz::https://github.com/dhitalkamal/mdo/releases/download/v${pkgver}/mdo_v${pkgver}_linux_arm64.tar.gz")
+sha256sums_x86_64=('d41cf1de37663f00020d5ab456ce2e6d5439cac1b2faee412ca4f1f94ada5636')
+sha256sums_aarch64=('9d511c4328002fb112db91b824c5fd810e310ee2c3f1594da8c73732a60e9b2e')
+
+package() {
+  install -Dm755 "${srcdir}/mdo" "${pkgdir}/usr/bin/mdo"
+}
