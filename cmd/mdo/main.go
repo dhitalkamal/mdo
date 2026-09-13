@@ -17,6 +17,7 @@ import (
 	"github.com/dhitalkamal/mdo/internal/render"
 	"github.com/dhitalkamal/mdo/internal/runner"
 	"github.com/dhitalkamal/mdo/internal/term"
+	"github.com/dhitalkamal/mdo/internal/tui"
 )
 
 // version is set at build time via -ldflags "-X main.version=vX.Y.Z".
@@ -40,12 +41,14 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	copyN := fs.Int("copy", 0, "copy the Nth fenced code block to the clipboard (OSC 52) and exit")
 	list := fs.Bool("list", false, "list fenced code blocks and exit")
 	runIt := fs.Bool("run", false, "step through fenced shell blocks, confirming each before it runs")
+	tuiMode := fs.Bool("tui", false, "open an interactive pager (scroll, search, contents)")
 	noColor := fs.Bool("no-color", false, "disable color output")
 	width := fs.Int("width", 0, "wrap width in columns (0 = auto-detect)")
 	showVersion := fs.Bool("version", false, "print version and exit")
 	fs.IntVar(copyN, "c", 0, "shorthand for --copy")
 	fs.BoolVar(list, "l", false, "shorthand for --list")
 	fs.BoolVar(runIt, "r", false, "shorthand for --run")
+	fs.BoolVar(tuiMode, "t", false, "shorthand for --tui")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, "usage: mdo [flags] [file]\n\n"+
 			"render a markdown file (or stdin) in the terminal.\n\nflags:\n")
@@ -60,8 +63,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return nil
 	}
 
-	if *runIt && (fs.Arg(0) == "" || fs.Arg(0) == "-") {
-		return fmt.Errorf("--run needs a file argument (stdin is used for your y/n answers)")
+	if (*runIt || *tuiMode) && (fs.Arg(0) == "" || fs.Arg(0) == "-") {
+		return fmt.Errorf("--run and --tui need a file argument (stdin is used for interaction)")
 	}
 
 	src, err := readInput(fs.Arg(0), stdin)
@@ -76,6 +79,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return copyBlock(stdout, stderr, src, *copyN)
 	case *runIt:
 		return runBlocks(stdin, stdout, src)
+	case *tuiMode:
+		return runTUI(src, colorLevel(*noColor, stdout), fdOf(stdout))
 	default:
 		level := colorLevel(*noColor, stdout)
 		w := *width
@@ -140,6 +145,29 @@ func runBlocks(stdin io.Reader, stdout io.Writer, src []byte) error {
 		return err
 	}
 	return runner.Run(shell, stdin, stdout, runner.ShellExecutor)
+}
+
+// runTUI opens the interactive pager on the rendered document.
+func runTUI(src []byte, level term.Level, fd int) error {
+	if level == term.LevelNone {
+		level = term.LevelBasic // the pager is interactive; keep some color
+	}
+	content := render.Render(src, render.Options{Level: level, Width: term.Width(fd, 80)})
+	return tui.Run(content, headingTexts(src))
+}
+
+// headingTexts pulls ATX heading text (lines starting with #) for the TOC.
+func headingTexts(src []byte) []string {
+	var hs []string
+	for _, ln := range strings.Split(string(src), "\n") {
+		t := strings.TrimLeft(ln, " ")
+		if strings.HasPrefix(t, "#") {
+			if h := strings.TrimSpace(strings.TrimLeft(t, "#")); h != "" {
+				hs = append(hs, h)
+			}
+		}
+	}
+	return hs
 }
 
 // colorLevel decides color, disabling it when output is piped or NO_COLOR is set.

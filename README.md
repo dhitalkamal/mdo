@@ -60,6 +60,7 @@ mdo README.md            # render a markdown file
 mdo --list README.md     # list the fenced code blocks
 mdo --copy 1 README.md   # copy the first code block to the clipboard (OSC 52)
 mdo --run README.md      # step through shell blocks, confirming each before it runs
+mdo --tui README.md      # interactive pager: scroll, / search, t for contents, q quit
 ```
 
 With `--run`, mdo shows each shell block and asks `[y]es / [c]opy / [s]kip / [q]uit`
