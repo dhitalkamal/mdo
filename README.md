@@ -40,10 +40,11 @@ Homebrew (macOS / Linux):
 brew install dhitalkamal/tap/mdo
 ```
 
-Arch Linux: `mdo-bin` on the AUR. Termux (Android), Raspberry Pi, and servers:
-use the one-line installer, or grab the linux arm64 binary from the
+Arch Linux, Termux (Android), Raspberry Pi, and servers: use the one-line
+installer or `go install`, or grab the linux binary from the
 [releases page](https://github.com/dhitalkamal/mdo/releases). Prebuilt binaries
-cover linux amd64/arm64 and macOS amd64/arm64.
+cover linux amd64/arm64 and macOS amd64/arm64. (An AUR `mdo-bin` package is
+planned.)
 
 ## Build from source
 
