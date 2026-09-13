@@ -34,7 +34,8 @@ func TestRunCopiesBlockAsOSC52(t *testing.T) {
 	if err := run([]string{"-c", "1", "-"}, in, &out, &errb); err != nil {
 		t.Fatalf("run: %v", err)
 	}
-	want := "\x1b]52;c;bHMgLWxhCg==\x1b\\" // base64("ls -la\n") = bHMgLWxhCg==
+	// trailing newline is stripped so the last line waits for Enter on paste.
+	want := "\x1b]52;c;bHMgLWxh\x1b\\" // base64("ls -la") = bHMgLWxh
 	if out.String() != want {
 		t.Errorf("copy output = %q, want %q", out.String(), want)
 	}

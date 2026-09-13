@@ -86,7 +86,10 @@ func copyBlock(stdout, stderr io.Writer, src []byte, n int) error {
 	if n > len(bs) {
 		return fmt.Errorf("no code block %d (found %d)", n, len(bs))
 	}
-	if err := clip.Copy(stdout, bs[n-1].Code); err != nil {
+	// strip trailing newlines so pasting into a shell leaves the last command
+	// at the prompt for you to review and run, instead of auto-executing it.
+	code := strings.TrimRight(bs[n-1].Code, "\n")
+	if err := clip.Copy(stdout, code); err != nil {
 		return err
 	}
 	fmt.Fprintf(stderr, "copied code block %d to clipboard\n", n)

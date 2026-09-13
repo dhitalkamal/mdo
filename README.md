@@ -20,8 +20,18 @@ for the terminal-everywhere, human-vets-the-agent workflow:
 
 ## Build
 
-    make build
-    ./mdo README.md
+```sh
+make build
+./mdo README.md
+```
+
+## Usage
+
+```sh
+mdo README.md            # render a markdown file
+mdo --list README.md     # list the fenced code blocks
+mdo --copy 1 README.md   # copy the first code block to the clipboard (OSC 52)
+```
 
 ## Status
 
