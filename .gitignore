@@ -1,0 +1,15 @@
+# compiled binary + release artifacts
+/mdo
+/dist/
+*.exe
+
+# test + coverage output
+*.out
+coverage.*
+
+# vendored deps (we use modules)
+/vendor/
+
+# editor / os cruft
+.DS_Store
+*.swp
