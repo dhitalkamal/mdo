@@ -16,6 +16,9 @@ import (
 	"github.com/dhitalkamal/mdo/internal/term"
 )
 
+// version is set at build time via -ldflags "-X main.version=vX.Y.Z".
+var version = "dev"
+
 func main() {
 	if err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintln(os.Stderr, "mdo:", err)
@@ -31,6 +34,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	runIt := fs.Bool("run", false, "step through fenced shell blocks, confirming each before it runs")
 	noColor := fs.Bool("no-color", false, "disable color output")
 	width := fs.Int("width", 0, "wrap width in columns (0 = auto-detect)")
+	showVersion := fs.Bool("version", false, "print version and exit")
 	fs.IntVar(copyN, "c", 0, "shorthand for --copy")
 	fs.BoolVar(list, "l", false, "shorthand for --list")
 	fs.BoolVar(runIt, "r", false, "shorthand for --run")
@@ -41,6 +45,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	}
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+
+	if *showVersion {
+		fmt.Fprintf(stdout, "mdo %s\n", version)
+		return nil
 	}
 
 	if *runIt && (fs.Arg(0) == "" || fs.Arg(0) == "-") {

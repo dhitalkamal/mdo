@@ -41,6 +41,16 @@ func TestRunCopiesBlockAsOSC52(t *testing.T) {
 	}
 }
 
+func TestRunVersion(t *testing.T) {
+	var out, errb bytes.Buffer
+	if err := run([]string{"--version"}, strings.NewReader(""), &out, &errb); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), version) {
+		t.Errorf("version output = %q, want to contain %q", out.String(), version)
+	}
+}
+
 func TestRunCopyOutOfRange(t *testing.T) {
 	var out, errb bytes.Buffer
 	in := strings.NewReader("no blocks here\n")
