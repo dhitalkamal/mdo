@@ -20,6 +20,7 @@ func (s Style) Apply(text string) string {
 type Palette struct {
 	H1, H2, H3   Style
 	Bold, Italic Style
+	Strike       Style
 	Code         Style // inline code
 	Quote        Style
 	Link         Style
@@ -43,6 +44,7 @@ func For(level term.Level) Palette {
 		H3:     sgr("1;34"), // bold blue
 		Bold:   sgr("1"),
 		Italic: sgr("3"),
+		Strike: sgr("9"),    // strikethrough
 		Code:   sgr("33"),   // yellow
 		Quote:  sgr("2;32"), // dim green
 		Link:   sgr("4;34"), // underline blue

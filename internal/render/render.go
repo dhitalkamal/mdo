@@ -11,6 +11,8 @@ import (
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	extast "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 
 	"github.com/dhitalkamal/mdo/internal/term"
@@ -25,7 +27,8 @@ type Options struct {
 
 // Render returns src rendered as ANSI text.
 func Render(src []byte, opts Options) string {
-	doc := goldmark.New().Parser().Parse(text.NewReader(src))
+	md := goldmark.New(goldmark.WithExtensions(extension.GFM))
+	doc := md.Parser().Parse(text.NewReader(src))
 	r := &renderer{src: src, pal: theme.For(opts.Level), opts: opts}
 	r.blocks(doc, "")
 	return strings.TrimRight(r.b.String(), "\n") + "\n"
@@ -91,6 +94,9 @@ func (r *renderer) block(n ast.Node, indent string) {
 		w := max(1, r.opts.Width-visibleLen(indent))
 		r.writeLine(indent + r.pal.Rule.Apply(strings.Repeat("-", w)))
 		r.blank()
+	case *extast.Table:
+		r.table(n, indent)
+		r.blank()
 	default:
 		r.blocks(n, indent)
 	}
@@ -135,6 +141,59 @@ func (r *renderer) list(l *ast.List, indent string) {
 	}
 }
 
+func (r *renderer) table(n ast.Node, indent string) {
+	var rows [][]string
+	for row := n.FirstChild(); row != nil; row = row.NextSibling() {
+		var cells []string
+		for cell := row.FirstChild(); cell != nil; cell = cell.NextSibling() {
+			cells = append(cells, r.inline(cell))
+		}
+		rows = append(rows, cells)
+	}
+	if len(rows) == 0 {
+		return
+	}
+	ncol := 0
+	for _, row := range rows {
+		if len(row) > ncol {
+			ncol = len(row)
+		}
+	}
+	widths := make([]int, ncol)
+	for _, row := range rows {
+		for i, c := range row {
+			if w := visibleLen(c); w > widths[i] {
+				widths[i] = w
+			}
+		}
+	}
+	for ri, row := range rows {
+		var b strings.Builder
+		for i := 0; i < ncol; i++ {
+			cell := ""
+			if i < len(row) {
+				cell = row[i]
+			}
+			b.WriteString(cell)
+			b.WriteString(strings.Repeat(" ", widths[i]-visibleLen(cell)))
+			if i < ncol-1 {
+				b.WriteString("  ")
+			}
+		}
+		r.writeLine(indent + strings.TrimRight(b.String(), " "))
+		if ri == 0 { // separator under the header row
+			var s strings.Builder
+			for i := 0; i < ncol; i++ {
+				s.WriteString(strings.Repeat("-", widths[i]))
+				if i < ncol-1 {
+					s.WriteString("  ")
+				}
+			}
+			r.writeLine(indent + r.pal.Rule.Apply(s.String()))
+		}
+	}
+}
+
 func (r *renderer) codeBlock(lang, code, indent string) {
 	code = strings.TrimRight(code, "\n")
 	emit := func(s string) {
@@ -172,6 +231,14 @@ func (r *renderer) inline(n ast.Node) string {
 			b.Write(t.Value)
 		case *ast.CodeSpan:
 			b.WriteString(r.pal.Code.Apply(r.textOf(t)))
+		case *extast.Strikethrough:
+			b.WriteString(r.pal.Strike.Apply(r.inline(t)))
+		case *extast.TaskCheckBox:
+			if t.IsChecked {
+				b.WriteString("[x] ")
+			} else {
+				b.WriteString("[ ] ")
+			}
 		case *ast.Emphasis:
 			if t.Level >= 2 {
 				b.WriteString(r.pal.Bold.Apply(r.inline(t)))

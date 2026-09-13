@@ -64,6 +64,35 @@ func TestBlockquoteGutter(t *testing.T) {
 	}
 }
 
+func TestTableRenders(t *testing.T) {
+	out := plain("| a | b |\n| --- | --- |\n| 1 | 2 |\n")
+	for _, w := range []string{"a", "b", "1", "2"} {
+		if !strings.Contains(out, w) {
+			t.Errorf("table cell %q missing: %q", w, out)
+		}
+	}
+	if strings.Contains(out, "| ---") {
+		t.Errorf("raw table separator present (GFM tables not parsed): %q", out)
+	}
+}
+
+func TestStrikethrough(t *testing.T) {
+	out := plain("~~gone~~\n")
+	if !strings.Contains(out, "gone") || strings.Contains(out, "~~") {
+		t.Errorf("strikethrough not handled: %q", out)
+	}
+}
+
+func TestTaskList(t *testing.T) {
+	out := plain("- [x] done\n- [ ] todo\n")
+	if !strings.Contains(out, "done") || !strings.Contains(out, "todo") {
+		t.Errorf("task list items missing: %q", out)
+	}
+	if !strings.Contains(out, "[x]") || !strings.Contains(out, "[ ]") {
+		t.Errorf("task checkboxes missing: %q", out)
+	}
+}
+
 func TestParagraphWraps(t *testing.T) {
 	out := Render([]byte("aaaa bbbb cccc dddd\n"), Options{Level: term.LevelNone, Width: 9})
 	if !strings.Contains(out, "\n") {
