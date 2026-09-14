@@ -96,7 +96,11 @@ flags:
 	case *runIt:
 		return runBlocks(stdin, stdout, src)
 	case *tuiMode:
-		return runTUI(src, colorLevel(*noColor, stdout), fdOf(stdout))
+		base := "."
+		if f := fs.Arg(0); f != "" && f != "-" {
+			base = filepath.Dir(f)
+		}
+		return runTUI(src, colorLevel(*noColor, stdout), fdOf(stdout), base)
 	default:
 		level := colorLevel(*noColor, stdout)
 		w := *width
@@ -164,12 +168,36 @@ func runBlocks(stdin io.Reader, stdout io.Writer, src []byte) error {
 }
 
 // runTUI opens the interactive pager on the rendered document.
-func runTUI(src []byte, level term.Level, fd int) error {
+func runTUI(src []byte, level term.Level, fd int, base string) error {
+	content := tuiRender(src, level, term.Width(fd, 80), base)
+	return tui.Run(content, headingTexts(src))
+}
+
+// tuiRender builds the pager content: same markdown render as plain mode, but
+// with the pager's image method. Split out from runTUI so it can be tested
+// without starting the interactive program.
+func tuiRender(src []byte, level term.Level, width int, base string) string {
 	if level == term.LevelNone {
 		level = term.LevelBasic // the pager is interactive; keep some color
 	}
-	content := render.Render(src, render.Options{Level: level, Width: term.Width(fd, 80)})
-	return tui.Run(content, headingTexts(src))
+	return render.Render(src, render.Options{
+		Level:   level,
+		Width:   width,
+		Images:  tuiImgKind(level),
+		BaseDir: base,
+	})
+}
+
+// tuiImgKind picks the pager's image method. It never uses the kitty graphics
+// protocol: kitty places images at an absolute cursor position, so they do not
+// move or clear as the viewport scrolls. Half-blocks are plain colored text
+// that scroll like any other line, so the pager uses those - which need
+// truecolor for their 24-bit escapes. Anything less falls back to a placeholder.
+func tuiImgKind(level term.Level) img.Kind {
+	if level == term.LevelTrueColor {
+		return img.KindHalfBlock
+	}
+	return img.KindNone
 }
 
 // headingTexts pulls ATX heading text (lines starting with #) for the TOC.
