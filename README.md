@@ -7,8 +7,9 @@ blocks. Built for people who live in the terminal on any device (SSH, Termux, a
 bare TTY), and designed so AI agents can drive it too: an agent proposes a
 runbook, you vet and run each step.
 
-Status: work in progress. v1: render, OSC 52 clipboard copy, and an interactive
-step-through runner that vets each shell block before running it.
+Status: v1 is complete (v0.2.1): render, OSC 52 clipboard copy, and an
+interactive step-through runner that vets each shell block before running it,
+plus a TUI pager, inline images, and an MCP server.
 
 ## Why
 
@@ -16,7 +17,7 @@ Existing tools either render Markdown or run its code blocks, but none are built
 for the terminal-everywhere, human-vets-the-agent workflow:
 
 - copies code blocks to your real clipboard even over SSH / Termux (OSC 52)
-- works anywhere a terminal runs, single static binary, no runtime deps
+- works anywhere a terminal runs, a single binary with nothing else to install
 - renders inline images (kitty graphics protocol, or unicode half-blocks on any truecolor terminal)
 - plain-text and git-native: your docs stay yours, no lock-in
 
@@ -88,4 +89,5 @@ tool + human vet and run.
 
 ## Status
 
-Early development.
+v1 is complete and released as v0.2.1. Next: publish the `mdo-bin` AUR package
+(the PKGBUILD in packaging/aur is ready), then a 1.0.
