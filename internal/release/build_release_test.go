@@ -204,3 +204,35 @@ func TestBuildReleaseWritesFourPlatformTarballsEachWithAVersionedMdoBinary(t *te
 		})
 	}
 }
+
+// A dynamically linked linux binary breaks on hosts without a matching libc
+// (alpine, distroless). The script runs natively on a linux/amd64 runner,
+// where CGO is on by default, so this guards against a silent glibc link.
+func TestBuildReleaseLinuxBinariesAreStaticallyLinked(t *testing.T) {
+	dist := runScript(t)
+
+	for _, platform := range []string{"linux_amd64", "linux_arm64"} {
+		t.Run(platform, func(t *testing.T) {
+			bin := readSingleBinary(t, filepath.Join(dist, "mdo_"+testVersion+"_"+platform+".tar.gz"))
+			f, err := elf.NewFile(bytes.NewReader(bin))
+			if err != nil {
+				t.Fatalf("not an ELF binary: %v", err)
+			}
+			for _, p := range f.Progs {
+				if p.Type == elf.PT_INTERP {
+					t.Errorf("binary has a PT_INTERP header (dynamic loader), want none")
+				}
+			}
+			if s := f.Section(".dynamic"); s != nil {
+				t.Errorf("binary has a .dynamic section, want none")
+			}
+			libs, err := f.ImportedLibraries()
+			if err != nil {
+				t.Fatalf("read imported libraries: %v", err)
+			}
+			if len(libs) != 0 {
+				t.Errorf("imported libraries = %v, want none", libs)
+			}
+		})
+	}
+}
