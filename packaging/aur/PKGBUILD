@@ -1,13 +1,11 @@
 # Maintainer: Kamal Dhital <dhitalkamal@users.noreply.github.com>
 pkgname=mdo-bin
-pkgver=0.2.1
+pkgver=0.2.2
 pkgrel=1
 pkgdesc='Render markdown and vet/run its code blocks in the terminal (OSC 52 clipboard, works over SSH/Termux)'
 arch=('x86_64' 'aarch64')
 url='https://github.com/dhitalkamal/mdo'
 license=('MIT')
-# the linux release binary is dynamically linked against glibc
-depends=('glibc')
 provides=('mdo')
 conflicts=('mdo')
 # prebuilt binary: a debug package would be empty
@@ -17,8 +15,8 @@ source=("LICENSE-${pkgver}::https://raw.githubusercontent.com/dhitalkamal/mdo/v$
 source_x86_64=("mdo-${pkgver}-x86_64.tar.gz::https://github.com/dhitalkamal/mdo/releases/download/v${pkgver}/mdo_v${pkgver}_linux_amd64.tar.gz")
 source_aarch64=("mdo-${pkgver}-aarch64.tar.gz::https://github.com/dhitalkamal/mdo/releases/download/v${pkgver}/mdo_v${pkgver}_linux_arm64.tar.gz")
 sha256sums=('5d03ca17a1987e87aa522128dcfb18f85cd5508b3a08a9b832b845e28ab780d2')
-sha256sums_x86_64=('09e8b5b33679699e88c88cca5940744bdbdf50cdd70c45b1913e3a6a0e5d7f6a')
-sha256sums_aarch64=('4b4462171943089598c935be8feda5041da8d80a51fe4a7b84fcb536ab579be1')
+sha256sums_x86_64=('122aa285328f3f7bf6550c19111a070b4adc36bd4b33f56bb8f9c6c6a9fd19e9')
+sha256sums_aarch64=('376432961a61ef11f8de225b6cc789396011c6cd1092e2ce85e3429bbbf7d8af')
 
 package() {
   install -Dm755 "${srcdir}/mdo" "${pkgdir}/usr/bin/mdo"
