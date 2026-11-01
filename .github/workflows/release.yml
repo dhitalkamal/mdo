@@ -16,15 +16,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: build binaries
-        run: |
-          ver="${GITHUB_REF_NAME}"
-          mkdir -p dist
-          for t in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
-            os="${t%/*}"; arch="${t#*/}"
-            GOOS="$os" GOARCH="$arch" go build -ldflags "-s -w -X main.version=$ver" -o dist/mdo ./cmd/mdo
-            tar -C dist -czf "dist/mdo_${ver}_${os}_${arch}.tar.gz" mdo
-            rm dist/mdo
-          done
+        run: scripts/build-release.sh "$GITHUB_REF_NAME"
       - name: publish release
         uses: softprops/action-gh-release@v2
         with:
