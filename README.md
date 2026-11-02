@@ -44,8 +44,15 @@ brew install dhitalkamal/tap/mdo
 Arch Linux, Termux (Android), Raspberry Pi, and servers: use the one-line
 installer or `go install`, or grab the linux binary from the
 [releases page](https://github.com/dhitalkamal/mdo/releases). Prebuilt binaries
-cover linux amd64/arm64 and macOS amd64/arm64. (An AUR `mdo-bin` package is
-planned.)
+cover linux amd64/arm64 and macOS amd64/arm64. The linux binaries are statically
+linked, so they run on any distro, including musl ones like Alpine.
+
+On Arch you can also build the package locally until `mdo-bin` is on the AUR
+(new AUR account registration is closed for now):
+
+```sh
+git clone https://github.com/dhitalkamal/mdo && cd mdo/packaging/aur && makepkg -si
+```
 
 ## Build from source
 
@@ -89,5 +96,6 @@ tool + human vet and run.
 
 ## Status
 
-v1 is complete and released as v0.2.1. Next: publish the `mdo-bin` AUR package
-(the PKGBUILD in packaging/aur is ready), then a 1.0.
+v1 is complete and released as v0.2.2. Next: publish the `mdo-bin` AUR package
+once AUR registration reopens (the PKGBUILD in packaging/aur is ready and
+tested), then a 1.0.
